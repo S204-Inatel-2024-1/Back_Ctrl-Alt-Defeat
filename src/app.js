@@ -12,6 +12,8 @@ const {
   checkTokenAdmin,
 } = require("./middlewares/authMiddleware");
 
+// teste
+
 // Config Express Json Response
 app.use(express.json());
 
