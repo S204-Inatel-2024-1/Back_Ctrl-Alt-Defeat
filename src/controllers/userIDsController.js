@@ -32,11 +32,11 @@ async function adminGetUserID(req, res) {
     const orientador = await Orientador.findById(id, "-password");
 
     if (aluno) {
-      res.status(200).json({ user: aluno });
+      return res.status(200).json({ user: aluno });
     } else if (orientador) {
-      res.status(200).json({ user: orientador });
+      return res.status(200).json({ user: orientador });
     } else if (!aluno && !orientador) {
-      res.status(404).json({ msg: "Usuário não encontrado!" });
+      return res.status(404).json({ msg: "Usuário não encontrado!" });
     }
   } catch (error) {
     console.error(error);

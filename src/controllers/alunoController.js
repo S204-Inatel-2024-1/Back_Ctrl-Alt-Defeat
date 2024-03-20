@@ -46,6 +46,8 @@ async function registerAluno(req, res) {
     matricula,
     acesso: "Student",
     password: passwordHash,
+    passwordResetToken: "",
+    passwordResetExpires: "",
   });
 
   try {

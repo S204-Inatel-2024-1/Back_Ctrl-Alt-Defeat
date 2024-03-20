@@ -13,6 +13,7 @@ const {
   checkTokenOrientador,
   checkTokenAdmin,
 } = require("./middlewares/authMiddleware");
+const authController = require("./controllers/authController");
 
 // Config Express Json Response
 app.use(express.json());
@@ -37,6 +38,9 @@ app.post("/auth/register/orientador", orientadorController.registerOrientador);
 app.post("/auth/login/orientador", orientadorController.loginOrientador);
 app.post("/auth/register/admin", adminController.registerAdmin);
 app.post("/auth/login/admin", adminController.loginAdmin);
+
+// Password Recovery
+app.post("/password/recovery", authController.recoverPassword);
 
 // Credencials
 const dbUser = process.env.DB_USER;

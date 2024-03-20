@@ -8,6 +8,8 @@ const Student = mongoose.model("Student", {
   matricula: String,
   acesso: String,
   password: String,
+  passwordResetToken: String,
+  passwordResetExpires: Date,
 });
 
 module.exports = Student;

@@ -7,6 +7,8 @@ const Professor = mongoose.model("Professor", {
   email: String,
   acesso: String,
   password: String,
+  passwordResetToken: String,
+  passwordResetExpires: Date,
 });
 
 module.exports = Professor;

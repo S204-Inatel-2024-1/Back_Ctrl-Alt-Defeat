@@ -42,6 +42,8 @@ async function registerOrientador(req, res) {
     email: emailOrientador,
     acesso: "Professor",
     password: passwordHash,
+    passwordResetToken: "",
+    passwordResetExpires: "",
   });
 
   try {
