@@ -1,6 +1,7 @@
 const Aluno = require("../models/StudentModel");
 const Orientador = require("../models/ProfessorModel");
 const crypto = require("crypto");
+const mailer = require("../modules/nodemailer");
 
 // Password recovery
 async function recoverPassword(req, res) {
@@ -25,7 +26,6 @@ async function recoverPassword(req, res) {
     now.setHours(now.getHours() + 1);
 
     if (aluno) {
-      res.status(200).json({ msg: `Aluno ${aluno.name} encontrado!` });
       await Aluno.findByIdAndUpdate(aluno.id, {
         $set: {
           passwordResedToken: token,
@@ -33,9 +33,6 @@ async function recoverPassword(req, res) {
         },
       });
     } else if (orientador) {
-      res
-        .status(200)
-        .json({ msg: `Orientador ${orientador.name} encontrado!` });
       await Orientador.findByIdAndUpdate(orientador.id, {
         $set: {
           passwordResedToken: token,
@@ -44,7 +41,26 @@ async function recoverPassword(req, res) {
       });
     }
 
-    console.log(token, now);
+    // Send response with token and expiration
+    // res.status(200).json({ msg: "Token gerado com sucesso!", token, now });
+
+    await mailer.sendMail(
+      {
+        to: userEmail,
+        from: "ctrlaltdefeat.com.br",
+        subject: "Test",
+        template: "forgotPassword",
+        context: { token },
+      },
+      (err) => {
+        if (err) {
+          console.log(err);
+          return res.status(400).json({ msg: "Erro ao enviar o email!" });
+        }
+
+        return res.status(200).json({ msg: "Email enviado com sucesso!" });
+      }
+    );
   } catch (error) {
     res
       .status(400)
