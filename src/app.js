@@ -41,6 +41,7 @@ app.post("/auth/login/admin", adminController.loginAdmin);
 
 // Password Recovery
 app.post("/password/recovery", authController.recoverPassword);
+app.post("/password/reset", authController.resetPassword);
 
 // Credencials
 const dbUser = process.env.DB_USER;

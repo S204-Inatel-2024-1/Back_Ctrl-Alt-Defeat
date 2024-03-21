@@ -44,10 +44,10 @@ async function registerAluno(req, res) {
     name: nameAluno,
     email: emailAluno,
     matricula,
-    acesso: "Student",
+    acesso: "Aluno",
     password: passwordHash,
-    passwordResetToken: "",
-    passwordResetExpires: "",
+    passwordResetToken: undefined,
+    passwordResetExpires: undefined,
   });
 
   try {

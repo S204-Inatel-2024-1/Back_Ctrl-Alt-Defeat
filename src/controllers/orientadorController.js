@@ -40,10 +40,10 @@ async function registerOrientador(req, res) {
   const userOrientador = new Orientador({
     name: nameOrientador,
     email: emailOrientador,
-    acesso: "Professor",
+    acesso: "Orientador",
     password: passwordHash,
-    passwordResetToken: "",
-    passwordResetExpires: "",
+    passwordResetToken: undefined,
+    passwordResetExpires: undefined,
   });
 
   try {
