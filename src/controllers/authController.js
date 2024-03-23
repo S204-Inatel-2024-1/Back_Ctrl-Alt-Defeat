@@ -171,4 +171,5 @@ async function registerEquipe(req, res) {}
 module.exports = {
   forgotPassword,
   resetPassword,
+  registerEquipe,
 };
