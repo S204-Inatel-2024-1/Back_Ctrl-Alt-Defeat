@@ -18,20 +18,24 @@ async function registerOrientador(req, res) {
     return res.status(422).json({ msg: validations });
   }
 
-  if (password !== confirmPass) {
-    return res.status(422).json({ msg: "As senhas não conferem!" });
+  const orientValidations = await controllerMid.validateOrientadores(email);
+
+  if (orientValidations) {
+    return res.status(422).json({ msg: orientValidations });
+  }
+
+  const passValidations = controllerMid.validatePasswords(
+    password,
+    confirmPass
+  );
+
+  if (passValidations) {
+    return res.status(422).json({ msg: passValidations });
   }
 
   try {
-    const userExists = await Orientador.findOne({ email });
-
-    if (userExists) {
-      return res.status(422).json({ msg: "Email existente. Utilize outro!" });
-    }
-
     // Create password using hash created by Bcrypt
-    const salt = await bcrypt.genSalt(12);
-    const passwordHash = await bcrypt.hash(password, salt);
+    const passwordHash = await controllerMid.createHash(password);
 
     // Create orientador
     const orientador = new Orientador({
@@ -54,6 +58,7 @@ async function registerOrientador(req, res) {
 // Login user Orientador
 async function loginOrientador(req, res) {
   const { email, password } = req.body;
+  let orientador = undefined;
 
   const validations = controllerMid.validateFields([
     { key: email, message: "O email é obrigatório!" },
@@ -64,17 +69,24 @@ async function loginOrientador(req, res) {
     return res.status(422).json({ msg: validations });
   }
 
-  const orientador = await Orientador.findOne({ email });
+  const orientValidations = await controllerMid.validateOrientadores(
+    email,
+    true
+  );
 
-  if (!orientador) {
-    return res.status(404).json({ msg: "Orientador não encontrado!" });
+  if (orientValidations) {
+    return res.status(422).json({ msg: orientValidations });
+  } else {
+    orientador = await Orientador.findOne({ email });
   }
 
-  // Check if passwords match
-  const checkPass = await bcrypt.compare(password, orientador.password);
+  const comparisonValidation = await controllerMid.comparePasswords(
+    password,
+    orientador.password
+  );
 
-  if (!checkPass) {
-    return res.status(422).json({ msg: "Senha inválida!" });
+  if (comparisonValidation) {
+    return res.status(422).json({ msg: comparisonValidation });
   }
 
   try {

@@ -18,6 +18,12 @@ async function registerAluno(req, res) {
     return res.status(422).json({ msg: validations });
   }
 
+  const alunoValidations = await controllerMid.validateAlunos(email);
+
+  if (alunoValidations) {
+    return res.status(422).json({ msg: alunoValidations });
+  }
+
   const passValidations = controllerMid.validatePasswords(
     password,
     confirmPass
@@ -25,12 +31,6 @@ async function registerAluno(req, res) {
 
   if (passValidations) {
     return res.status(422).json({ msg: passValidations });
-  }
-
-  const alunoValidations = await controllerMid.validateAlunos(email);
-
-  if (alunoValidations) {
-    return res.status(422).json({ msg: alunoValidations });
   }
 
   try {

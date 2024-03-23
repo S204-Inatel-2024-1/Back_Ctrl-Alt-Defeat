@@ -1,5 +1,4 @@
 const Admin = require("../models/AdminModel");
-const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const controllerMid = require("../middlewares/controllerMiddleware");
 
@@ -17,20 +16,24 @@ async function registerAdmin(req, res) {
     return res.status(422).json({ msg: validations });
   }
 
-  if (password !== confirmPass) {
-    return res.status(422).json({ msg: "As senhas não conferem!" });
+  const adminValidations = await controllerMid.validateAdmins(email);
+
+  if (adminValidations) {
+    return res.status(422).json({ msg: adminValidations });
+  }
+
+  const passValidations = controllerMid.validatePasswords(
+    password,
+    confirmPass
+  );
+
+  if (passValidations) {
+    return res.status(422).json({ msg: passValidations });
   }
 
   try {
-    const userExists = await Admin.findOne({ email });
-
-    if (userExists) {
-      return res.status(422).json({ msg: "Email existente. Utilize outro!" });
-    }
-
     // Create password using hash created by Bcrypt
-    const salt = await bcrypt.genSalt(12);
-    const passwordHash = await bcrypt.hash(password, salt);
+    const passwordHash = await controllerMid.createHash(password);
 
     // Create admin
     const admin = new Admin({
@@ -51,6 +54,7 @@ async function registerAdmin(req, res) {
 // Login user Admin
 async function loginAdmin(req, res) {
   const { email, password } = req.body;
+  let admin = undefined;
 
   const validations = controllerMid.validateFields([
     { key: email, message: "O email é obrigatório!" },
@@ -61,17 +65,21 @@ async function loginAdmin(req, res) {
     return res.status(422).json({ msg: validations });
   }
 
-  const admin = await Admin.findOne({ email });
+  const adminValidations = await controllerMid.validateAdmins(email, true);
 
-  if (!admin) {
-    return res.status(404).json({ msg: "Administrador não encontrado!" });
+  if (adminValidations) {
+    return res.status(422).json({ msg: adminValidations });
+  } else {
+    admin = await Admin.findOne({ email });
   }
 
-  // Check if passwords match
-  const checkPass = await bcrypt.compare(password, admin.password);
+  const comparisonValidation = await controllerMid.comparePasswords(
+    password,
+    admin.password
+  );
 
-  if (!checkPass) {
-    return res.status(422).json({ msg: "Senha inválida!" });
+  if (comparisonValidation) {
+    return res.status(422).json({ msg: comparisonValidation });
   }
 
   try {
