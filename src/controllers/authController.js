@@ -165,6 +165,9 @@ async function resetPassword(req, res) {
   }
 }
 
+// Register group Team
+async function registerEquipe(req, res) {}
+
 module.exports = {
   forgotPassword,
   resetPassword,
