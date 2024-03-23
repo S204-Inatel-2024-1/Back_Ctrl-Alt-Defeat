@@ -6,14 +6,14 @@ async function orientadorGetUserID(req, res) {
   try {
     const id = req.params.id;
 
-    // Check if user exists
-    const user = await Aluno.findById(id, "-password");
+    // "-password" faz com que a senha não seja exposta
+    const aluno = await Aluno.findById(id, "-password");
 
-    if (!user) {
+    if (!aluno) {
       return res.status(404).json({ msg: "Aluno não encontrado!" });
     }
 
-    res.status(200).json({ user });
+    res.status(200).json({ user: aluno });
   } catch (error) {
     console.error(error);
     res.status(500).json({

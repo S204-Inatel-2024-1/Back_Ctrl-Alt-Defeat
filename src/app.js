@@ -40,7 +40,7 @@ app.post("/auth/register/admin", adminController.registerAdmin);
 app.post("/auth/login/admin", adminController.loginAdmin);
 
 // Password Recovery
-app.post("/password/recovery", authController.recoverPassword);
+app.post("/forgot/password", authController.forgotPassword);
 app.post("/password/reset", authController.resetPassword);
 
 // Credencials

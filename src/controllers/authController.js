@@ -3,19 +3,23 @@ const Orientador = require("../models/ProfessorModel");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const mailer = require("../modules/nodemailer");
+const controllerMid = require("../middlewares/controllerMiddleware");
 
-// Password recovery
-async function recoverPassword(req, res) {
-  const { userEmail } = req.body;
+// forgot Password
+async function forgotPassword(req, res) {
+  const { email } = req.body;
 
-  // validation
-  if (!userEmail) {
-    return res.status(422).json({ msg: "O email é obrigatório!" });
+  const validations = controllerMid.validateFields([
+    { key: email, message: "O email é obrigatório!" },
+  ]);
+
+  if (validations) {
+    return res.status(422).json({ msg: validations });
   }
 
   // Check if user (Student or Professor) exists
-  const aluno = await Aluno.findOne({ email: userEmail });
-  const orientador = await Orientador.findOne({ email: userEmail });
+  const aluno = await Aluno.findOne({ email });
+  const orientador = await Orientador.findOne({ email });
 
   if (!aluno && !orientador) {
     return res
@@ -52,7 +56,7 @@ async function recoverPassword(req, res) {
 
     await mailer.sendMail(
       {
-        to: userEmail,
+        to: email,
         from: "ctrlaltdefeat.com.br",
         subject: "Test",
         template: "forgotPassword",
@@ -76,20 +80,17 @@ async function recoverPassword(req, res) {
 
 // Password recovery
 async function resetPassword(req, res) {
-  const { userEmail, token, newPassword, confirmPass } = req.body;
+  const { email, token, newPassword, confirmPass } = req.body;
 
-  // validations
-  if (!userEmail) {
-    return res.status(422).json({ msg: "O email é obrigatório!" });
-  }
-  if (!token) {
-    return res.status(422).json({ msg: "O Token é obrigatório!" });
-  }
-  if (!newPassword) {
-    return res.status(422).json({ msg: "A senha é obrigatória!" });
-  }
-  if (!confirmPass) {
-    return res.status(422).json({ msg: "Obrigatório confirmar a senha!" });
+  const validations = controllerMid.validateFields([
+    { key: email, message: "O email é obrigatório!" },
+    { key: token, message: "O token é obrigatório!" },
+    { key: newPassword, message: "A nova senha é obrigatória!" },
+    { key: confirmPass, message: "Obrigatório confirmar a senha!" },
+  ]);
+
+  if (validations) {
+    return res.status(422).json({ msg: validations });
   }
 
   if (newPassword !== confirmPass) {
@@ -97,8 +98,8 @@ async function resetPassword(req, res) {
   }
 
   // Check if user (Student or Professor) exists
-  const aluno = await Aluno.findOne({ email: userEmail });
-  const orientador = await Orientador.findOne({ email: userEmail });
+  const aluno = await Aluno.findOne({ email });
+  const orientador = await Orientador.findOne({ email });
 
   // const aluno = await Aluno.findOne({ email: userEmail }).select(
   //   "+passwordResetToken passwordResetExpires"
@@ -125,7 +126,7 @@ async function resetPassword(req, res) {
         return res.status(400).json({ msg: "Token expirado!" });
       }
 
-      // Create password
+      // Create password using hash created by Bcrypt
       const salt = await bcrypt.genSalt(12);
       const passwordHash = await bcrypt.hash(newPassword, salt);
 
@@ -165,6 +166,6 @@ async function resetPassword(req, res) {
 }
 
 module.exports = {
-  recoverPassword,
+  forgotPassword,
   resetPassword,
 };

@@ -19,17 +19,22 @@ async function registerAluno(req, res) {
     return res.status(422).json({ msg: validations });
   }
 
-  if (password !== confirmPass) {
-    return res.status(422).json({ msg: "As senhas não conferem!" });
+  const passValidations = controllerMid.validatePasswords(
+    password,
+    confirmPass
+  );
+
+  if (passValidations) {
+    return res.status(422).json({ msg: passValidations });
+  }
+
+  const alunoValidations = await controllerMid.validateAlunos(email);
+
+  if (alunoValidations) {
+    return res.status(422).json({ msg: alunoValidations });
   }
 
   try {
-    const userExists = await Aluno.findOne({ email });
-
-    if (userExists) {
-      return res.status(422).json({ msg: "Email existente. Utilize outro!" });
-    }
-
     // Create password using hash created by Bcrypt
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(password, salt);
@@ -57,6 +62,7 @@ async function registerAluno(req, res) {
 // Login user Aluno
 async function loginAluno(req, res) {
   const { email, password } = req.body;
+  let aluno = undefined;
 
   const validations = controllerMid.validateFields([
     { key: email, message: "O email é obrigatório!" },
@@ -67,13 +73,21 @@ async function loginAluno(req, res) {
     return res.status(422).json({ msg: validations });
   }
 
+  // if (!aluno) {
+  //   return res
+  //     .status(422)
+  //     .json({ msg: "Aluno não encontrado no Banco de Dados" });
+  // }
+
+  const alunoValidations = await controllerMid.validateAlunos(email, true);
+
+  if (alunoValidations) {
+    return res.status(422).json({ msg: alunoValidations });
+  } else {
+    aluno = await Aluno.findOne({ email });
+  }
+
   try {
-    const aluno = await Aluno.findOne({ email });
-
-    if (!aluno) {
-      return res.status(404).json({ msg: "Aluno não encontrado!" });
-    }
-
     // Check if passwords match
     const checkPass = await bcrypt.compare(password, aluno.password);
 
