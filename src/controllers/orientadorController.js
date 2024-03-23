@@ -1,53 +1,49 @@
 const Orientador = require("../models/ProfessorModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const controllerMid = require("../middlewares/controllerMiddleware");
 
 // Register user Orientador
 async function registerOrientador(req, res) {
-  const { nameOrientador, emailOrientador, passwordOrientador, confirmPass } =
-    req.body;
+  const { name, email, password, confirmPass } = req.body;
 
-  // Validations
-  if (!nameOrientador) {
-    return res.status(422).json({ msg: "O nome é obrigatório!" });
-  }
-  if (!emailOrientador) {
-    return res.status(422).json({ msg: "O email é obrigatório!" });
-  }
-  if (!passwordOrientador) {
-    return res.status(422).json({ msg: "A senha é obrigatória!" });
-  }
-  if (!confirmPass) {
-    return res.status(422).json({ msg: "Obrigatório confirmar a senha!" });
+  const validations = controllerMid.validateFields([
+    { key: name, message: "O nome é obrigatório!" },
+    { key: email, message: "O email é obrigatório!" },
+    { key: password, message: "A senha é obrigatória!" },
+    { key: confirmPass, message: "Obrigatório confirmar a senha!" },
+  ]);
+
+  if (validations) {
+    return res.status(422).json({ msg: validations });
   }
 
-  if (passwordOrientador !== confirmPass) {
+  if (password !== confirmPass) {
     return res.status(422).json({ msg: "As senhas não conferem!" });
   }
 
-  // Check if user exists
-  const userExists = await Orientador.findOne({ email: emailOrientador });
-
-  if (userExists) {
-    return res.status(422).json({ msg: "Email existente. Utilize outro!" });
-  }
-
-  // Create password
-  const salt = await bcrypt.genSalt(12);
-  const passwordHash = await bcrypt.hash(passwordOrientador, salt);
-
-  // Create user
-  const userOrientador = new Orientador({
-    name: nameOrientador,
-    email: emailOrientador,
-    acesso: "Orientador",
-    password: passwordHash,
-    passwordResetToken: undefined,
-    passwordResetExpires: undefined,
-  });
-
   try {
-    await userOrientador.save();
+    const userExists = await Orientador.findOne({ email });
+
+    if (userExists) {
+      return res.status(422).json({ msg: "Email existente. Utilize outro!" });
+    }
+
+    // Create password using hash created by Bcrypt
+    const salt = await bcrypt.genSalt(12);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    // Create orientador
+    const orientador = new Orientador({
+      name,
+      email,
+      acesso: "Orientador",
+      password: passwordHash,
+      passwordResetToken: undefined,
+      passwordResetExpires: undefined,
+    });
+
+    await orientador.save();
     res.status(201).json({ msg: "Orientador criado com sucesso!" });
   } catch (error) {
     console.error(error);
@@ -57,24 +53,25 @@ async function registerOrientador(req, res) {
 
 // Login user Orientador
 async function loginOrientador(req, res) {
-  const { emailOrientador, passwordOrientador } = req.body;
+  const { email, password } = req.body;
 
-  if (!emailOrientador) {
-    return res.status(422).json({ msg: "O email é obrigatório!" });
+  const validations = controllerMid.validateFields([
+    { key: email, message: "O email é obrigatório!" },
+    { key: password, message: "A senha é obrigatória!" },
+  ]);
+
+  if (validations) {
+    return res.status(422).json({ msg: validations });
   }
-  if (!passwordOrientador) {
-    return res.status(422).json({ msg: "A senha é obrigatória!" });
-  }
 
-  // Check if user exists
-  const user = await Orientador.findOne({ email: emailOrientador });
+  const orientador = await Orientador.findOne({ email });
 
-  if (!user) {
+  if (!orientador) {
     return res.status(404).json({ msg: "Orientador não encontrado!" });
   }
 
-  // Check if password matches
-  const checkPass = await bcrypt.compare(passwordOrientador, user.password);
+  // Check if passwords match
+  const checkPass = await bcrypt.compare(password, orientador.password);
 
   if (!checkPass) {
     return res.status(422).json({ msg: "Senha inválida!" });
@@ -85,8 +82,8 @@ async function loginOrientador(req, res) {
 
     const token = jwt.sign(
       {
-        id: user._id,
-        userType: "orientador",
+        id: orientador._id,
+        // userType: "orientador",
       },
       secretOrientador
     );

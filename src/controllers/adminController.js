@@ -1,46 +1,45 @@
 const Admin = require("../models/AdminModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const controllerMid = require("../middlewares/controllerMiddleware");
 
 // Register user Admin
 async function registerAdmin(req, res) {
-  const { emailAdmin, passwordAdmin, confirmPass } = req.body;
+  const { email, password, confirmPass } = req.body;
 
-  // validations
-  if (!emailAdmin) {
-    return res.status(422).json({ msg: "O email é obrigatório!" });
-  }
-  if (!passwordAdmin) {
-    return res.status(422).json({ msg: "A senha é obrigatória!" });
-  }
-  if (!confirmPass) {
-    return res.status(422).json({ msg: "Obrigatório confirmar a senha!" });
+  const validations = controllerMid.validateFields([
+    { key: email, message: "O email é obrigatório!" },
+    { key: password, message: "A senha é obrigatória!" },
+    { key: confirmPass, message: "Obrigatório confirmar a senha!" },
+  ]);
+
+  if (validations) {
+    return res.status(422).json({ msg: validations });
   }
 
-  if (passwordAdmin !== confirmPass) {
+  if (password !== confirmPass) {
     return res.status(422).json({ msg: "As senhas não conferem!" });
   }
 
-  // Check if user exists
-  const userExists = await Admin.findOne({ email: emailAdmin });
-
-  if (userExists) {
-    return res.status(422).json({ msg: "Email existente. Utilize outro!" });
-  }
-
-  // Create password
-  const salt = await bcrypt.genSalt(12);
-  const passwordHash = await bcrypt.hash(passwordAdmin, salt);
-
-  // Create user
-  const userAdmin = new Admin({
-    email: emailAdmin,
-    acesso: "Administrator",
-    password: passwordHash,
-  });
-
   try {
-    await userAdmin.save();
+    const userExists = await Admin.findOne({ email });
+
+    if (userExists) {
+      return res.status(422).json({ msg: "Email existente. Utilize outro!" });
+    }
+
+    // Create password using hash created by Bcrypt
+    const salt = await bcrypt.genSalt(12);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    // Create admin
+    const admin = new Admin({
+      email,
+      acesso: "Administrador",
+      password: passwordHash,
+    });
+
+    await admin.save();
 
     res.status(201).json({ msg: "Administrador criado com sucesso!" });
   } catch (error) {
@@ -51,24 +50,25 @@ async function registerAdmin(req, res) {
 
 // Login user Admin
 async function loginAdmin(req, res) {
-  const { emailAdmin, passwordAdmin } = req.body;
+  const { email, password } = req.body;
 
-  if (!emailAdmin) {
-    return res.status(422).json({ msg: "O email é obrigatório!" });
+  const validations = controllerMid.validateFields([
+    { key: email, message: "O email é obrigatório!" },
+    { key: password, message: "A senha é obrigatória!" },
+  ]);
+
+  if (validations) {
+    return res.status(422).json({ msg: validations });
   }
-  if (!passwordAdmin) {
-    return res.status(422).json({ msg: "A senha é obrigatória!" });
-  }
 
-  // Check if user exists
-  const user = await Admin.findOne({ email: emailAdmin });
+  const admin = await Admin.findOne({ email });
 
-  if (!user) {
+  if (!admin) {
     return res.status(404).json({ msg: "Administrador não encontrado!" });
   }
 
-  // Check if password matches
-  const checkPass = await bcrypt.compare(passwordAdmin, user.password);
+  // Check if passwords match
+  const checkPass = await bcrypt.compare(password, admin.password);
 
   if (!checkPass) {
     return res.status(422).json({ msg: "Senha inválida!" });
@@ -79,8 +79,8 @@ async function loginAdmin(req, res) {
 
     const token = jwt.sign(
       {
-        id: user._id,
-        userType: "administrador",
+        id: admin._id,
+        // userType: "administrador",
       },
       secretAdmin
     );
