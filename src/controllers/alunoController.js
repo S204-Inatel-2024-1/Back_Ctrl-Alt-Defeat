@@ -1,5 +1,4 @@
 const Aluno = require("../models/StudentModel");
-const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const controllerMid = require("../middlewares/controllerMiddleware");
 
@@ -36,8 +35,7 @@ async function registerAluno(req, res) {
 
   try {
     // Create password using hash created by Bcrypt
-    const salt = await bcrypt.genSalt(12);
-    const passwordHash = await bcrypt.hash(password, salt);
+    const passwordHash = await controllerMid.createHash(password);
 
     // Create student
     const aluno = new Aluno({
@@ -73,12 +71,6 @@ async function loginAluno(req, res) {
     return res.status(422).json({ msg: validations });
   }
 
-  // if (!aluno) {
-  //   return res
-  //     .status(422)
-  //     .json({ msg: "Aluno não encontrado no Banco de Dados" });
-  // }
-
   const alunoValidations = await controllerMid.validateAlunos(email, true);
 
   if (alunoValidations) {
@@ -87,14 +79,16 @@ async function loginAluno(req, res) {
     aluno = await Aluno.findOne({ email });
   }
 
+  const comparisonValidation = await controllerMid.comparePasswords(
+    password,
+    aluno.password
+  );
+
+  if (comparisonValidation) {
+    return res.status(422).json({ msg: comparisonValidation });
+  }
+
   try {
-    // Check if passwords match
-    const checkPass = await bcrypt.compare(password, aluno.password);
-
-    if (!checkPass) {
-      return res.status(422).json({ msg: "Senha inválida!" });
-    }
-
     const secretAluno = process.env.SECRET_ALUNO;
 
     const token = jwt.sign(
