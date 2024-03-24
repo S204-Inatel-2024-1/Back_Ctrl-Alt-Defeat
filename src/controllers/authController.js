@@ -241,25 +241,24 @@ async function registerEquipe(req, res) {
   }
 }
 
+// Get members from specific Team
 async function getEquipeData(req, res) {
   try {
     const nameProjeto = req.params.projeto; // Acessando o parâmetro de consulta "projeto"
-
-    console.log(nameProjeto);
-    console.log(typeof nameProjeto);
+    let equipe = undefined;
 
     const equipeValidation = await controllerMid.validateEquipe(
       nameProjeto,
       true
     );
 
-    console.log(equipeValidation);
-
     if (equipeValidation) {
       return res.status(422).json({ msg: equipeValidation });
+    } else {
+      equipe = await Equipe.findOne({ nameProjeto });
     }
 
-    return res.status(400).json({ msg: nameProjeto });
+    return res.status(400).json({ members: equipe.members });
   } catch (error) {
     res.status(500).json({
       msg: "Erro no servidor. Entre com o nome do projeto da equipe desejada!",

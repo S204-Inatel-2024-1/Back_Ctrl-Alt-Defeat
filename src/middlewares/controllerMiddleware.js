@@ -72,8 +72,6 @@ async function validateOrientadores(email, checkLogin = false) {
 async function validateEquipe(nameProjeto, checkGetData = false) {
   const teamExists = await Equipe.findOne({ nameProjeto });
 
-  console.log(teamExists);
-
   if (teamExists) {
     return checkGetData
       ? null
