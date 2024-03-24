@@ -1,5 +1,6 @@
 const Aluno = require("../models/StudentModel");
 const Orientador = require("../models/ProfessorModel");
+const Equipe = require("../models/TeamModel");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const mailer = require("../modules/nodemailer");
@@ -166,7 +167,78 @@ async function resetPassword(req, res) {
 }
 
 // Register group Team
-async function registerEquipe(req, res) {}
+async function registerEquipe(req, res, next) {
+  const { nameProjeto, members } = req.body;
+  let userExists = undefined;
+  let errorMsg = undefined;
+
+  const validations = controllerMid.validateFields([
+    { key: nameProjeto, message: "O nome do Projeto é obrigatório!" },
+  ]);
+
+  if (validations) {
+    return res.status(422).json({ msg: validations });
+  }
+
+  const teamExists = await Equipe.findOne({ nameProjeto });
+
+  if (teamExists) {
+    return res.status(422).json({
+      msg: `${teamExists.nameProjeto} já existente. Por favor crie outro!`,
+    });
+  }
+
+  for (let i = 0; i < members.length; i++) {
+    const member = members[i];
+    userExists = await Aluno.findOne({ email: member.email });
+
+    // Verifica se o objeto do membro está vazio
+    if (Object.keys(member).length === 0 && member.constructor === Object) {
+      next();
+    } else {
+      // Verifica se algum dos campos obrigatórios está ausente, caso um membro esteja parcialmente preenchido
+      if (!member.name) {
+        return res.status(422).json({
+          msg: `Faltando preencher o campo de nome para o membro ${i + 1}!`,
+        });
+      } else if (!member.email) {
+        return res.status(422).json({
+          msg: `Faltando preencher o campo de email para o membro ${i + 1}!`,
+        });
+      } else if (!member.matricula) {
+        return res.status(422).json({
+          msg: `Faltando preencher o campo de matricula para o membro ${
+            i + 1
+          }!`,
+        });
+      }
+
+      if (!userExists) {
+        errorMsg = `Email ${member.email} não cadastrado no Banco de Dados!`;
+        break;
+      } else if (member.matricula !== userExists.matricula) {
+        errorMsg = `Matrícula de ${member.email} incorreta de acordo com o Banco de Dados!`;
+        break;
+      }
+    }
+  }
+
+  if (errorMsg) {
+    return res.status(422).json({ msg: errorMsg });
+  }
+
+  try {
+    // Create team
+    // const equipe = new Equipe({
+    //   nameProjeto,
+    //   members,
+    // });
+
+    // await equipe.save();
+
+    res.status(201).json({ msg: `Equipe ${nameProjeto} criada com sucesso!` });
+  } catch (error) {}
+}
 
 module.exports = {
   forgotPassword,

@@ -43,6 +43,9 @@ app.post("/auth/login/admin", adminController.loginAdmin);
 app.post("/forgot/password", authController.forgotPassword);
 app.post("/password/reset", authController.resetPassword);
 
+// Register Equipe
+app.post("/register/equipe", authController.registerEquipe);
+
 // Credencials
 const dbUser = process.env.DB_USER;
 const dbPassword = process.env.DB_PASS;
