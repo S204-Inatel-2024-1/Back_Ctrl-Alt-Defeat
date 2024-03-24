@@ -1,6 +1,7 @@
 const Admin = require("../models/AdminModel");
 const Aluno = require("../models/StudentModel");
 const Orientador = require("../models/ProfessorModel");
+const Equipe = require("../models/TeamModel");
 const bcrypt = require("bcrypt");
 
 function validateFields(fields) {
@@ -68,6 +69,28 @@ async function validateOrientadores(email, checkLogin = false) {
   }
 }
 
+async function validateEquipe(nameProjeto) {
+  const teamExists = await Equipe.findOne({ nameProjeto });
+
+  if (teamExists) {
+    return `${teamExists.nameProjeto} já existente. Por favor crie outro!`;
+  } else {
+    return null;
+  }
+}
+
+async function validateEmailMat(email, matricula) {
+  const userExists = await Aluno.findOne({ email });
+
+  if (!userExists) {
+    return `Email ${email} não cadastrado no Banco de Dados!`;
+  } else if (matricula !== userExists.matricula) {
+    return `Matrícula de ${email} incorreta de acordo com o Banco de Dados!`;
+  } else {
+    return null;
+  }
+}
+
 module.exports = {
   validateFields,
   validatePasswords,
@@ -76,4 +99,6 @@ module.exports = {
   validateAdmins,
   validateAlunos,
   validateOrientadores,
+  validateEquipe,
+  validateEmailMat,
 };

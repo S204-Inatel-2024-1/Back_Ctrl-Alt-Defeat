@@ -167,9 +167,8 @@ async function resetPassword(req, res) {
 }
 
 // Register group Team
-async function registerEquipe(req, res, next) {
+async function registerEquipe(req, res) {
   const { nameProjeto, members } = req.body;
-  let userExists = undefined;
   let errorMsg = undefined;
 
   const validations = controllerMid.validateFields([
@@ -180,64 +179,66 @@ async function registerEquipe(req, res, next) {
     return res.status(422).json({ msg: validations });
   }
 
-  const teamExists = await Equipe.findOne({ nameProjeto });
+  const equipeValidation = await controllerMid.validateEquipe(nameProjeto);
 
-  if (teamExists) {
-    return res.status(422).json({
-      msg: `${teamExists.nameProjeto} já existente. Por favor crie outro!`,
-    });
+  if (equipeValidation) {
+    return res.status(422).json({ msg: equipeValidation });
   }
 
   for (let i = 0; i < members.length; i++) {
     const member = members[i];
-    userExists = await Aluno.findOne({ email: member.email });
 
     // Verifica se o objeto do membro está vazio
     if (Object.keys(member).length === 0 && member.constructor === Object) {
-      next();
     } else {
       // Verifica se algum dos campos obrigatórios está ausente, caso um membro esteja parcialmente preenchido
       if (!member.name) {
-        return res.status(422).json({
-          msg: `Faltando preencher o campo de nome para o membro ${i + 1}!`,
-        });
+        errorMsg = `Faltando preencher o campo de nome para o membro ${i + 1}!`;
+        break; // Interrompe o loop assim que um erro é encontrado
       } else if (!member.email) {
-        return res.status(422).json({
-          msg: `Faltando preencher o campo de email para o membro ${i + 1}!`,
-        });
+        errorMsg = `Faltando preencher o campo de email para o membro ${
+          i + 1
+        }!`;
+        break;
       } else if (!member.matricula) {
-        return res.status(422).json({
-          msg: `Faltando preencher o campo de matricula para o membro ${
-            i + 1
-          }!`,
-        });
-      }
+        errorMsg = `Faltando preencher o campo de matricula para o membro ${
+          i + 1
+        }!`;
+        break;
+      } else {
+        errorMsg = await controllerMid.validateEmailMat(
+          member.email,
+          member.matricula
+        );
 
-      if (!userExists) {
-        errorMsg = `Email ${member.email} não cadastrado no Banco de Dados!`;
-        break;
-      } else if (member.matricula !== userExists.matricula) {
-        errorMsg = `Matrícula de ${member.email} incorreta de acordo com o Banco de Dados!`;
-        break;
+        if (errorMsg) {
+          break;
+        }
       }
     }
   }
 
   if (errorMsg) {
-    return res.status(422).json({ msg: errorMsg });
+    return res.status(422).json({ msg: errorMsg }); // Envia a resposta com o erro encontrado
   }
 
   try {
     // Create team
-    // const equipe = new Equipe({
-    //   nameProjeto,
-    //   members,
-    // });
+    const equipe = new Equipe({
+      nameProjeto,
+      members,
+    });
 
-    // await equipe.save();
+    await equipe.save();
 
-    res.status(201).json({ msg: `Equipe ${nameProjeto} criada com sucesso!` });
-  } catch (error) {}
+    return res
+      .status(201)
+      .json({ msg: `Equipe ${nameProjeto} criada com sucesso!` }); // Envia a resposta de sucesso
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ msg: "Erro ao tentar registrar equipe. Tente novamente!" }); // Envia a resposta de erro
+  }
 }
 
 module.exports = {
