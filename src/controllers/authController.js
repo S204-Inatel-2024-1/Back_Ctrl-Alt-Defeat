@@ -233,11 +233,37 @@ async function registerEquipe(req, res) {
 
     return res
       .status(201)
-      .json({ msg: `Equipe ${nameProjeto} criada com sucesso!` }); // Envia a resposta de sucesso
+      .json({ msg: `Equipe ${nameProjeto} criada com sucesso!` });
   } catch (error) {
     return res
       .status(400)
-      .json({ msg: "Erro ao tentar registrar equipe. Tente novamente!" }); // Envia a resposta de erro
+      .json({ msg: "Erro ao tentar registrar equipe. Tente novamente!" });
+  }
+}
+
+async function getEquipeData(req, res) {
+  try {
+    const nameProjeto = req.params.projeto; // Acessando o parâmetro de consulta "projeto"
+
+    console.log(nameProjeto);
+    console.log(typeof nameProjeto);
+
+    const equipeValidation = await controllerMid.validateEquipe(
+      nameProjeto,
+      true
+    );
+
+    console.log(equipeValidation);
+
+    if (equipeValidation) {
+      return res.status(422).json({ msg: equipeValidation });
+    }
+
+    return res.status(400).json({ msg: nameProjeto });
+  } catch (error) {
+    res.status(500).json({
+      msg: "Erro no servidor. Entre com o nome do projeto da equipe desejada!",
+    });
   }
 }
 
@@ -245,4 +271,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   registerEquipe,
+  getEquipeData,
 };

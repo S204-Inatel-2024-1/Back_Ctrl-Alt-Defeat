@@ -15,7 +15,6 @@ async function orientadorGetUserID(req, res) {
 
     res.status(200).json({ user: aluno });
   } catch (error) {
-    console.error(error);
     res.status(500).json({
       msg: "Erro no servidor. Excedido número de caracteres de ID válido!",
     });
