@@ -32,9 +32,17 @@ app.get(
 app.get("/user/admin/get/:id", checkTokenAdmin, userController.adminGetUserID);
 
 // Registers and Logins
-app.post("/auth/register/aluno", alunoController.registerAluno);
+app.post(
+  "/auth/register/aluno",
+  checkTokenAdmin,
+  alunoController.registerAluno
+);
 app.post("/auth/login/aluno", alunoController.loginAluno);
-app.post("/auth/register/orientador", orientadorController.registerOrientador);
+app.post(
+  "/auth/register/orientador",
+  checkTokenAdmin,
+  orientadorController.registerOrientador
+);
 app.post("/auth/login/orientador", orientadorController.loginOrientador);
 app.post("/auth/register/admin", adminController.registerAdmin);
 app.post("/auth/login/admin", adminController.loginAdmin);

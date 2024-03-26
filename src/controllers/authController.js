@@ -168,18 +168,21 @@ async function resetPassword(req, res) {
 
 // Register group Team
 async function registerEquipe(req, res) {
-  const { nameProjeto, members } = req.body;
+  const { number, name, members, nameOrientador, emailOrientador } = req.body;
   let errorMsg = undefined;
 
   const validations = controllerMid.validateFields([
-    { key: nameProjeto, message: "O nome do Projeto é obrigatório!" },
+    { key: number, message: "O número da equipe é obrigatório!" },
+    { key: name, message: "O nome do Projeto é obrigatório!" },
+    { key: nameOrientador, message: "O nome do orientador e é obrigatório!" },
+    { key: emailOrientador, message: "O email do orientador é obrigatório!" },
   ]);
 
   if (validations) {
     return res.status(422).json({ msg: validations });
   }
 
-  const equipeValidation = await controllerMid.validateEquipe(nameProjeto);
+  const equipeValidation = await controllerMid.validateEquipe(number);
 
   if (equipeValidation) {
     return res.status(422).json({ msg: equipeValidation });
@@ -222,18 +225,37 @@ async function registerEquipe(req, res) {
     return res.status(422).json({ msg: errorMsg }); // Envia a resposta com o erro encontrado
   }
 
+  const orientValidations = await controllerMid.validateOrientadores(
+    emailOrientador,
+    true
+  );
+
+  if (orientValidations) {
+    return res.status(422).json({ msg: orientValidations });
+  }
+
+  await Orientador.findOneAndUpdate(
+    { email: emailOrientador },
+    { $push: { equipesOrientadas: number } }
+    // { new: true } // Garante obter o documento atualizado de volta
+  );
+
   try {
     // Create team
     const equipe = new Equipe({
-      nameProjeto,
+      number,
+      name,
       members,
+      status: "Fase 1",
+      nameProfessor: nameOrientador,
+      emailProfessor: emailOrientador,
     });
 
     await equipe.save();
 
     return res
       .status(201)
-      .json({ msg: `Equipe ${nameProjeto} criada com sucesso!` });
+      .json({ msg: `Equipe ${number} criada com sucesso!` });
   } catch (error) {
     return res
       .status(400)
@@ -244,21 +266,23 @@ async function registerEquipe(req, res) {
 // Get members from specific Team
 async function getEquipeData(req, res) {
   try {
-    const nameProjeto = req.params.projeto; // Acessando o parâmetro de consulta "projeto"
+    const number = req.params.projeto; // Acessando o parâmetro de consulta "projeto"
     let equipe = undefined;
 
-    const equipeValidation = await controllerMid.validateEquipe(
-      nameProjeto,
-      true
-    );
+    const equipeValidation = await controllerMid.validateEquipe(number, true);
 
     if (equipeValidation) {
       return res.status(422).json({ msg: equipeValidation });
     } else {
-      equipe = await Equipe.findOne({ nameProjeto });
+      equipe = await Equipe.findOne({ number });
     }
 
-    return res.status(400).json({ members: equipe.members });
+    return res
+      .status(400)
+      .json({
+        members: equipe.members,
+        emailOrientador: equipe.emailProfessor,
+      });
   } catch (error) {
     res.status(500).json({
       msg: "Erro no servidor. Entre com o nome do projeto da equipe desejada!",

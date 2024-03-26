@@ -7,6 +7,7 @@ const Professor = mongoose.model("Professor", {
   email: String,
   acesso: String,
   password: String,
+  equipesOrientadas: [String],
   passwordResetToken: String,
   passwordResetExpires: Date,
 });

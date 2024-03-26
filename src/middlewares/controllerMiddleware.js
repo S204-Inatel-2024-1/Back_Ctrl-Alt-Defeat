@@ -69,13 +69,13 @@ async function validateOrientadores(email, checkLogin = false) {
   }
 }
 
-async function validateEquipe(nameProjeto, checkGetData = false) {
-  const teamExists = await Equipe.findOne({ nameProjeto });
+async function validateEquipe(number, checkGetData = false) {
+  const teamExists = await Equipe.findOne({ number });
 
   if (teamExists) {
     return checkGetData
       ? null
-      : `${teamExists.nameProjeto} já existente. Por favor crie outro!`;
+      : `Equipe ${teamExists.number} já existente. Por favor criar outra!`;
   } else if (!teamExists) {
     return checkGetData ? "Equipe não encontrada no Banco de Dados" : null;
   }

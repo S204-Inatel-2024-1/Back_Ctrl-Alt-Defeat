@@ -1,5 +1,4 @@
 const Orientador = require("../models/ProfessorModel");
-const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const controllerMid = require("../middlewares/controllerMiddleware");
 
@@ -43,6 +42,7 @@ async function registerOrientador(req, res) {
       email,
       acesso: "Orientador",
       password: passwordHash,
+      equipesOrientadas: undefined,
       passwordResetToken: undefined,
       passwordResetExpires: undefined,
     });
