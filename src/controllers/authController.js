@@ -277,15 +277,25 @@ async function getEquipeData(req, res) {
       equipe = await Equipe.findOne({ number });
     }
 
-    return res
-      .status(400)
-      .json({
-        members: equipe.members,
-        emailOrientador: equipe.emailProfessor,
-      });
+    return res.status(200).json({
+      members: equipe.members,
+      emailOrientador: equipe.emailProfessor,
+    });
   } catch (error) {
     res.status(500).json({
       msg: "Erro no servidor. Entre com o nome do projeto da equipe desejada!",
+    });
+  }
+}
+
+// Get all Teams
+async function getEquipes(req, res) {
+  try {
+    const equipes = await Equipe.find({});
+    return res.status(200).json(equipes);
+  } catch (error) {
+    res.status(500).json({
+      msg: "Erro no servidor. Não foi possível pegar as equipes!",
     });
   }
 }
@@ -295,4 +305,5 @@ module.exports = {
   resetPassword,
   registerEquipe,
   getEquipeData,
+  getEquipes,
 };
